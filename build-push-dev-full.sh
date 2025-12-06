@@ -18,7 +18,7 @@ DOTNET_VERSION="${1:-10.0}"
 NODE_VERSION="${2:-24}"
 ANGULAR_VERSION="${3:-20}"
 
-IMAGE="ghcr.io/hallboard-team/dev-full-dotnet-v${DOTNET_VERSION}_node-v${NODE_VERSION}_angular-v${ANGULAR_VERSION}:latest"
+IMAGE="ghcr.io/hallboard-team/full-dotnet-v${DOTNET_VERSION}_node-v${NODE_VERSION}_angular-v${ANGULAR_VERSION}:latest"
 
 echo "🏗️  Building dev image: ${IMAGE}"
 

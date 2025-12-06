@@ -1,28 +1,51 @@
-# -------------------------------
-# Base .NET SDK image (dynamic version)
-# -------------------------------
-ARG DOTNET_VERSION=9.0
+# syntax=docker/dockerfile:1.4
+# -----------------------------------------
+# Full Dev Image: .NET SDK + Node + Angular
+# -----------------------------------------
+ARG DOTNET_VERSION=10.0
+ARG NODE_VERSION=24
+ARG ANGULAR_VERSION=20
+
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}
 
-# Create vscode user ONLY if not exists (rootless-safe)
+# Re-declare build args for later use
+ARG DOTNET_VERSION
+ARG NODE_VERSION
+ARG ANGULAR_VERSION
+
+# Basic tools + Node 24 (via NodeSource)
+RUN apt-get update \
+ && apt-get install -y curl ca-certificates gnupg \
+ && curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - \
+ && apt-get install -y nodejs \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
+
+# Install pnpm + Angular CLI globally
+RUN corepack enable \
+ && corepack prepare pnpm@latest --activate \
+ && npm install -g @angular/cli@${ANGULAR_VERSION}
+
+# Create non-root dev user (vscode) if not exists
 RUN id -u vscode &>/dev/null || useradd -u 1000 -m vscode
 
-# Prepare workspace directory BEFORE switching users
-RUN mkdir -p /workspaces/app && \
-    chown -R 1000:1000 /workspaces
+# Prepare workspace + VS Code server dir
+RUN mkdir -p /workspaces/app \
+ && chown -R 1000:1000 /workspaces \
+ && mkdir -p /home/vscode/.vscode-server-shared \
+ && chown -R 1000:1000 /home/vscode/.vscode-server-shared
 
-# Prepare VS Code shared server directory (host-mounted)
-RUN mkdir -p /home/vscode/.vscode-server-shared && \
-    chown -R 1000:1000 /home/vscode/.vscode-server-shared
-
-# Environment variable instructs VS Code NOT to write to /workspaces
+# VS Code will install its server here (host-mounted)
 ENV VSCODE_SERVER_DIR=/home/vscode/.vscode-server-shared
 
-# Switch to non-root user
+# Switch to dev user
 USER 1000:1000
 
-# Set working directory for dev tools
+# Default working directory at repo root
 WORKDIR /workspaces/app
 
-# Keep container running
+# Optional: log tool versions at build time
+RUN dotnet --info && node -v && ng version || true
+
+# Keep container alive for dev
 CMD ["sleep", "infinity"]

@@ -22,7 +22,7 @@ IMAGE="ghcr.io/hallboard-team/full-dotnet-v${DOTNET_VERSION}_node-v${NODE_VERSIO
 
 echo "🏗️  Building dev image: ${IMAGE}"
 
-podman build \
+docker build \
   -t "$IMAGE" \
   --build-arg DOTNET_VERSION="$DOTNET_VERSION" \
   --build-arg NODE_VERSION="$NODE_VERSION" \
@@ -30,6 +30,6 @@ podman build \
   -f Dockerfile.dev .
 
 echo "📤 Pushing $IMAGE to GHCR..."
-podman push "$IMAGE"
+docker push "$IMAGE"
 
 echo "✅ Done."

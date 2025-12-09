@@ -1,19 +1,30 @@
 # syntax=docker/dockerfile:1.4
-# -----------------------------------------
+# --------------------------------------------------
 # Full Dev Image: .NET SDK + Node + Angular
-# -----------------------------------------
+# Works with .NET 9 and 10
+# --------------------------------------------------
 ARG DOTNET_VERSION=10.0
 ARG NODE_VERSION=24
-ARG ANGULAR_VERSION=20
+ARG ANGULAR_VERSION=21
 
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}
 
-# Re-declare build args for later use
+# Re-declare for logging / metadata
 ARG DOTNET_VERSION
 ARG NODE_VERSION
 ARG ANGULAR_VERSION
 
-# Basic tools + Node 24 (via NodeSource)
+# Use bash for consistent RUN behaviour
+SHELL ["/bin/bash", "-lc"]
+
+# Reduce noise & telemetry in devcontainers
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+    DOTNET_NOLOGO=1 \
+    VSCODE_SERVER_DIR=/home/vscode/.vscode-server-shared
+
+# --------------------------------------------------
+# Install Node ${NODE_VERSION} (via NodeSource) + tools
+# --------------------------------------------------
 RUN apt-get update \
  && apt-get install -y curl ca-certificates gnupg \
  && curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - \
@@ -21,31 +32,43 @@ RUN apt-get update \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
-# Install pnpm + Angular CLI globally
+# --------------------------------------------------
+# pnpm + Angular CLI (global)
+# --------------------------------------------------
 RUN corepack enable \
  && corepack prepare pnpm@latest --activate \
  && npm install -g @angular/cli@${ANGULAR_VERSION}
 
-# Create non-root dev user (vscode) if not exists
-RUN id -u vscode &>/dev/null || useradd -u 1000 -m vscode
+# --------------------------------------------------
+# Ensure a non-root dev user with UID 1000 exists
+# and is called "vscode"
+# --------------------------------------------------
+RUN if id -u vscode >/dev/null 2>&1; then \
+      echo "vscode user already exists"; \
+    elif id -u 1000 >/dev/null 2>&1; then \
+      olduser=$(getent passwd 1000 | cut -d: -f1); \
+      echo "Reusing existing UID 1000 user: ${olduser} -> vscode"; \
+      usermod -l vscode "$olduser"; \
+      groupmod -n vscode "$olduser" || true; \
+      usermod -d /home/vscode -m vscode; \
+    else \
+      useradd -u 1000 -m vscode; \
+    fi
 
-# Prepare workspace + VS Code server dir
+# --------------------------------------------------
+# Workspace + shared VS Code server cache
+# --------------------------------------------------
 RUN mkdir -p /workspaces/app \
- && chown -R 1000:1000 /workspaces \
  && mkdir -p /home/vscode/.vscode-server-shared \
- && chown -R 1000:1000 /home/vscode/.vscode-server-shared
-
-# VS Code will install its server here (host-mounted)
-ENV VSCODE_SERVER_DIR=/home/vscode/.vscode-server-shared
+ && chown -R vscode:vscode /workspaces \
+ && chown -R vscode:vscode /home/vscode/.vscode-server-shared
 
 # Switch to dev user
-USER 1000:1000
-
-# Default working directory at repo root
+USER vscode
 WORKDIR /workspaces/app
 
-# Optional: log tool versions at build time
-RUN dotnet --info && node -v && ng version || true
+# Optional: log tool versions once at build time
+RUN dotnet --info && node -v && pnpm -v && ng version || true
 
-# Keep container alive for dev
+# Devcontainer / compose will override CMD; keep it idle by default
 CMD ["sleep", "infinity"]

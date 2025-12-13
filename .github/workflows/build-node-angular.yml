@@ -19,9 +19,9 @@ permissions:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/fullstack-dev
-  DOTNET_VERSION: "10.0"
-  NODE_VERSION: "24"
-  ANGULAR_VERSION: "21"
+  DOTNET_VERSION: "9.0"
+  NODE_VERSION: "22"
+  ANGULAR_VERSION: "19"
   PLATFORMS: linux/amd64
 
 jobs:

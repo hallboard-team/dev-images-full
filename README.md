@@ -11,7 +11,7 @@ The workflow at `.github/workflows/build-node-angular.yml` builds and publishes 
 
 1. Update the `env` block at the top of the workflow to change versions, registry, or supported platforms.
 2. Kick off the workflow from the Actions tab or push a change to rebuild.
-3. The workflow tags both `dotnet<major-dotnet>-node<NODE_VERSION>-ng<ANGULAR_VERSION>` (using the DOTNET major version) and `latest`.
+3. The workflow tags the image as `dotnet<major-dotnet>-node<NODE_VERSION>-ng<ANGULAR_VERSION>` (using the DOTNET major version).
 
 Guide comments at the top of the workflow point to where variables live so you can tweak them quickly.
 
@@ -23,4 +23,4 @@ If you still want to build locally for quick testing, run:
 ./build-push-dev-full.sh 10.0 24 21
 ```
 
-The script mirrors the GitHub Actions workflow by tagging the image as `fullstack-dev:dotnet10-node24-ng21` and `fullstack-dev:latest`.
+The script mirrors the GitHub Actions workflow by tagging the image as `fullstack-dev:dotnet10-node24-ng21`.

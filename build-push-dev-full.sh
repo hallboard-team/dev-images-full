@@ -21,20 +21,17 @@ IMAGE_REPO="ghcr.io/hallboard-team/fullstack-dev"
 DOTNET_MAJOR="${DOTNET_VERSION%%.*}"
 VERSION_TAG="dotnet${DOTNET_MAJOR}-node${NODE_VERSION}-ng${ANGULAR_VERSION}"
 IMAGE="${IMAGE_REPO}:${VERSION_TAG}"
-LATEST="${IMAGE_REPO}:latest"
 
 echo "🏗️  Building dev image: ${IMAGE}"
 
 docker build \
   -t "$IMAGE" \
-  -t "$LATEST" \
   --build-arg DOTNET_VERSION="$DOTNET_VERSION" \
   --build-arg NODE_VERSION="$NODE_VERSION" \
   --build-arg ANGULAR_VERSION="$ANGULAR_VERSION" \
   -f Dockerfile.dev .
 
-echo "📤 Pushing tags to GHCR..."
+echo "📤 Pushing $IMAGE to GHCR..."
 docker push "$IMAGE"
-docker push "$LATEST"
 
 echo "✅ Done."

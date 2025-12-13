@@ -22,7 +22,6 @@ env:
   DOTNET_VERSION: "10.0"
   NODE_VERSION: "24"
   ANGULAR_VERSION: "21"
-  TAG_LATEST: latest
   PLATFORMS: linux/amd64
 
 jobs:
@@ -66,6 +65,5 @@ jobs:
             ANGULAR_VERSION=${{ env.ANGULAR_VERSION }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.VERSION_TAG }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG_LATEST }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

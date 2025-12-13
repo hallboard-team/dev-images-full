@@ -1,0 +1,71 @@
+# ---------------------------------------------------------------------------------
+# Fullstack dev image workflow (.NET SDK + Node + Angular CLI)
+# Update the env block below to tweak versions, targets, or registry values.
+# ---------------------------------------------------------------------------------
+name: Build & Push fullstack-dev image
+
+on:
+  push:
+    paths:
+      - "Dockerfile.dev"
+      - "build-push-dev-full.sh"
+      - ".github/workflows/build-node-angular.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/fullstack-dev
+  DOTNET_VERSION: "10.0"
+  NODE_VERSION: "24"
+  ANGULAR_VERSION: "21"
+  TAG_LATEST: latest
+  PLATFORMS: linux/amd64
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU (multi-arch builds)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute tags
+        id: meta
+        run: |
+          DOTNET_MAJOR="${DOTNET_VERSION%%.*}"
+          VERSION_TAG="dotnet${DOTNET_MAJOR}-node${NODE_VERSION}-ng${ANGULAR_VERSION}"
+          echo "VERSION_TAG=${VERSION_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.dev
+          push: true
+          platforms: ${{ env.PLATFORMS }}
+          build-args: |
+            DOTNET_VERSION=${{ env.DOTNET_VERSION }}
+            NODE_VERSION=${{ env.NODE_VERSION }}
+            ANGULAR_VERSION=${{ env.ANGULAR_VERSION }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.VERSION_TAG }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG_LATEST }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

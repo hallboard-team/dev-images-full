@@ -21,7 +21,7 @@ env:
   IMAGE_NAME: ${{ github.repository_owner }}/fullstack-dev
   DOTNET_VERSION: "10.0"
   NODE_VERSION: "24"
-  ANGULAR_VERSION: "20"
+  ANGULAR_VERSION: "21"
   PLATFORMS: linux/amd64
 
 jobs:
